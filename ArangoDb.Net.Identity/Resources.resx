@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+    <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+        <xsd:element name="root" msdata:IsDataSet="true">
+
+        </xsd:element>
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+    </resheader>
+    <data name="NotIdentityRole" xml:space="preserve">
+    <value>AddArangoCoreStores can only be called with a role that derives from ArangoIdentityRole&lt;TKey, TUserRole, TRoleClaim&gt;.</value>
+        <comment>error when the role does not derive from ArangoIdentityRole</comment>
+  </data>
+    <data name="NotIdentityUser" xml:space="preserve">
+    <value>AddArangoCoreStores can only be called with a user that derives from ArangoIdentityUser&lt;TKey, TUserClaim, TUserRole, TUserLogin, TUserToken&gt;.</value>
+        <comment>error when the user does not derive from ArangoIdentityUser</comment>
+  </data>
+    <data name="RoleNotFound" xml:space="preserve">
+    <value>Role {0} does not exist.</value>
+        <comment>error when a role does not exist</comment>
+  </data>
+    <data name="ValueCannotBeNullOrEmpty" xml:space="preserve">
+    <value>Value cannot be null or empty.</value>
+        <comment>error when something cannot be null or empty</comment>
+  </data>
+</root>
