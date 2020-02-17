@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ContentModelStore">
     <e p="$USER_HOME$/.Rider2019.3/system/extResources" t="IncludeRecursive" />
-    <e p="$USER_HOME$/.Rider2019.3/system/resharper-host/local/Transient/ReSharperHost/v193/SolutionCaches/_ArangoDb.Net.Identity.-1515949352.00" t="ExcludeRecursive" />
+    <e p="$USER_HOME$/.Rider2019.3/system/resharper-host/local/Transient/ReSharperHost/v193/SolutionCaches/_ArangoDb.Net.Identity.286326822.00" t="ExcludeRecursive" />
     <e p="$PROJECT_DIR$" t="IncludeFlat">
       <e p=".git/info/exclude" t="IncludeRecursive" />
       <e p="ArangoDb.Net.Identity" t="IncludeRecursive">
@@ -17,6 +17,7 @@
         <e p="ArangoUserStore.cs" t="Include" />
         <e p="Constants.cs" t="Include" />
         <e p="Extensions" t="Include">
+          <e p="ClaimsHolderExtensions.cs" t="Include" />
           <e p="StringExtensions.cs" t="Include" />
         </e>
         <e p="IArangoDbContext.cs" t="Include" />
@@ -26,7 +27,6 @@
         <e p="IdentityUserLogin.cs" t="Include" />
         <e p="IdentityUserRole.cs" t="Include" />
         <e p="IdentityUserToken.cs" t="Include" />
-        <e p="README.md" t="Include" />
         <e p="Resources.Designer.cs" t="Include" />
         <e p="Resources.resx" t="Include" />
         <e p="UserStore.cs" t="Include" />

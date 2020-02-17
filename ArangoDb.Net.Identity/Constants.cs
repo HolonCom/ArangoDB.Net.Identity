@@ -6,6 +6,6 @@ namespace ArangoDb.Net.Identity
         public const string ROLE_COLLECTION = "Roles";
         public const string USER_ROLE_EDGE = "UserRoles";
         public const string USER_LOGIN_INFO_EDGE = "UserLoginInfo";
-
+        public const string USER_CLAIMS_EDGE = "UserClaims";
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using ArangoDb.Net.Identity.Extensions;
@@ -370,11 +371,148 @@ namespace ArangoDb.Net.Identity
             var query = $"for r in Roles for ur in UserRoles filter r.Name == '{normalizedRoleName}'" +
                         $" filter ur._from == '{user._id}' filter ur._to == r._id return r.Name";
 
-            var ret = db.Cursor.PostCursorAsync<List<string>>(query);
+            var ret = await db.Cursor.PostCursorAsync<List<string>>(query);
 
-            return ret.Result.Count == 0;
+            return ret.Count != 0;
         }
 
+        /// <summary>
+        /// Get the claims associated with the specified <paramref name="user"/> as an asynchronous operation.
+        /// </summary>
+        /// <param name="user">The user whose claims should be retrieved.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>A <see cref="Task{TResult}"/> that contains the claims granted to a user.</returns>
+#pragma warning disable 1998
+        public override async Task<IList<Claim>> GetClaimsAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+#pragma warning restore 1998
+        {
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            return user.Claims.Select(e => e.ToClaim()).ToList();
+        }
+
+        /// <summary>
+        /// Adds the <paramref name="claims"/> given to the specified <paramref name="user"/>.
+        /// </summary>
+        /// <param name="user">The user to add the claim to.</param>
+        /// <param name="claims">The claim to add to the user.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+        public override Task AddClaimsAsync(TUser user, IEnumerable<Claim> claims, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+            if (claims == null)
+            {
+                throw new ArgumentNullException(nameof(claims));
+            }
+            var addedSome = false;
+            foreach (var claim in claims)
+            {
+                if (user.AddClaim(claim))
+                {
+                    addedSome |= true;
+                }
+            }
+
+            //TODO: add claims update
+            return Task.FromResult(addedSome);
+
+        }
+
+        /// <summary>
+        /// Replaces the <paramref name="claim"/> on the specified <paramref name="user"/>, with the <paramref name="newClaim"/>.
+        /// </summary>
+        /// <param name="user">The user to replace the claim on.</param>
+        /// <param name="claim">The claim replace.</param>
+        /// <param name="newClaim">The new claim replacing the <paramref name="claim"/>.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+        public override async Task ReplaceClaimAsync(TUser user, Claim claim, Claim newClaim,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+            if (claim == null)
+            {
+                throw new ArgumentNullException(nameof(claim));
+            }
+            if (newClaim == null)
+            {
+                throw new ArgumentNullException(nameof(newClaim));
+            }
+
+            if (user.ReplaceClaim(claim, newClaim))
+            {
+                //TODO: Update claims collection
+            }
+        }
+
+        /// <summary>
+        /// Removes the <paramref name="claims"/> given from the specified <paramref name="user"/>.
+        /// </summary>
+        /// <param name="user">The user to remove the claims from.</param>
+        /// <param name="claims">The claim to remove.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+        public override async Task RemoveClaimsAsync(TUser user, IEnumerable<Claim> claims, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+            if (claims == null)
+            {
+                throw new ArgumentNullException(nameof(claims));
+            }
+            if (user.RemoveClaims(claims))
+            {
+             //TODO: remove claim from collection
+                //await MongoRepository.UpdateOneAsync<TUser, TKey, List<MongoClaim>>(user, e => e.Claims, user.Claims);
+            }
+        }
+
+        /// <summary>
+        /// Adds the <paramref name="login"/> given to the specified <paramref name="user"/>.
+        /// </summary>
+        /// <param name="user">The user to add the login to.</param>
+        /// <param name="login">The login to add to the user.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+        public override Task AddLoginAsync(TUser user, UserLoginInfo login,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (login == null)
+            {
+                throw new ArgumentNullException(nameof(login));
+            }
+
+            if (user.AddLogin(login))
+            {
+                MongoRepository.UpdateOne<TUser, TKey, List<UserLoginInfo>>(user, e => e.Logins, user.Logins);
+            }
+
+            return Task.FromResult(false);
+        }
 
     }
 }
