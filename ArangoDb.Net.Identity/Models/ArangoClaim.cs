@@ -1,10 +1,12 @@
-namespace ArangoDb.Net.Identity
+namespace ArangoDb.Net.Identity.Models
 {
     /// <summary>
     /// A class representing the claims a <see cref="ArangoIdentityUser{TKey}"/> can have.
     /// </summary>
     public class ArangoClaim
     {
+        public string _from { get; set; }
+        public string _to { get; set; }
         /// <summary>
         /// The type of the claim.
         /// </summary>

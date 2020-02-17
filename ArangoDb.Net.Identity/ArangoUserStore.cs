@@ -6,8 +6,10 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using ArangoDb.Net.Identity.Extensions;
+using ArangoDb.Net.Identity.Models;
 using ArangoDBNetStandard;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Logging;
 
 namespace ArangoDb.Net.Identity
@@ -319,7 +321,7 @@ namespace ArangoDb.Net.Identity
                 throw new ArgumentException(Resources.ValueCannotBeNullOrEmpty, nameof(normalizedRoleName));
             }
 
-            var query = $"for u in Users for r in Roles for ur in UserRoles " +
+            var query = "for u in Users for r in Roles for ur in UserRoles " +
                 $"filter r.Name == '{normalizedRoleName}' filter u.userId == '{user._id}'" +
             "filter ur._from == u._id filter ur._to == r._id remove ur in UserRoles";
 
@@ -402,7 +404,7 @@ namespace ArangoDb.Net.Identity
         /// <param name="claims">The claim to add to the user.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
         /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
-        public override Task AddClaimsAsync(TUser user, IEnumerable<Claim> claims, CancellationToken cancellationToken = default(CancellationToken))
+        public override async Task AddClaimsAsync(TUser user, IEnumerable<Claim> claims, CancellationToken cancellationToken = default(CancellationToken))
         {
             ThrowIfDisposed();
             if (user == null)
@@ -418,12 +420,11 @@ namespace ArangoDb.Net.Identity
             {
                 if (user.AddClaim(claim))
                 {
-                    addedSome |= true;
+                    addedSome = true;
                 }
             }
 
-            //TODO: add claims update
-            return Task.FromResult(addedSome);
+            if (addedSome) await db.Document.PutDocumentAsync($"Users/{user._id}", user);
 
         }
 
@@ -454,7 +455,7 @@ namespace ArangoDb.Net.Identity
 
             if (user.ReplaceClaim(claim, newClaim))
             {
-                //TODO: Update claims collection
+                await db.Document.PutDocumentAsync($"Users/{user._id}", user);
             }
         }
 
@@ -478,8 +479,7 @@ namespace ArangoDb.Net.Identity
             }
             if (user.RemoveClaims(claims))
             {
-             //TODO: remove claim from collection
-                //await MongoRepository.UpdateOneAsync<TUser, TKey, List<MongoClaim>>(user, e => e.Claims, user.Claims);
+                await db.Document.PutDocumentAsync($"Users/{user._id}", user);
             }
         }
 
@@ -488,9 +488,10 @@ namespace ArangoDb.Net.Identity
         /// </summary>
         /// <param name="user">The user to add the login to.</param>
         /// <param name="login">The login to add to the user.</param>
-        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate
+        /// notifications that the operation should be canceled.</param>
         /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
-        public override Task AddLoginAsync(TUser user, UserLoginInfo login,
+        public override async Task AddLoginAsync(TUser user, UserLoginInfo login,
             CancellationToken cancellationToken = default(CancellationToken))
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -508,11 +509,722 @@ namespace ArangoDb.Net.Identity
 
             if (user.AddLogin(login))
             {
-                MongoRepository.UpdateOne<TUser, TKey, List<UserLoginInfo>>(user, e => e.Logins, user.Logins);
+                var u = login as ArangoUserLoginInfo;
+                u._from = user._id;
+                u._to = user._id;
+                var ret = await db.Document.PutDocumentAsync($"UserLoginInfo", u);
             }
 
-            return Task.FromResult(false);
         }
+
+        /// <summary>
+        /// Removes the <paramref name="loginProvider"/> given from the specified <paramref name="user"/>.
+        /// </summary>
+        /// <param name="user">The user to remove the login from.</param>
+        /// <param name="loginProvider">The login to remove from the user.</param>
+        /// <param name="providerKey">The key provided by the <paramref name="loginProvider"/> to identify a user.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+        public override async Task RemoveLoginAsync(TUser user, string loginProvider, string providerKey,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+            var entry = user.Logins.FirstOrDefault(e => e.LoginProvider == loginProvider && e.ProviderKey == providerKey);
+            if (entry != null)
+            {
+                user.RemoveLogin(entry);
+
+                var query = "for ul in UserLoginInfo " +
+                            $"filter ul._from == '{user._id}' " +
+                            $"filter ul.loginProvider == '{loginProvider}' " +
+                            "Remove ul in UserLoginInfo";
+                var ret = await db.Cursor.PostCursorAsync<string>(query);
+            }
+        }
+
+        /// <summary>
+        /// Retrieves the associated logins for the specified <param ref="user"/>.
+        /// </summary>
+        /// <param name="user">The user whose associated logins to retrieve.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>
+        /// The <see cref="Task"/> for the asynchronous operation, containing a list of <see cref="UserLoginInfo"/> for the specified <paramref name="user"/>, if any.
+        /// </returns>
+        public override async Task<IList<UserLoginInfo>> GetLoginsAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+            return user.Logins.ToList();
+        }
+
+        /// <summary>
+        /// Retrieves the user associated with the specified login provider and login provider key.
+        /// </summary>
+        /// <param name="loginProvider">The login provider who provided the <paramref name="providerKey"/>.</param>
+        /// <param name="providerKey">The key provided by the <paramref name="loginProvider"/> to identify a user.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>
+        /// The <see cref="Task"/> for the asynchronous operation, containing the user, if any which matched the specified login provider and key.
+        /// </returns>
+        public override async Task<TUser> FindByLoginAsync(string loginProvider, string providerKey,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+            var userLogin = await FindUserLoginAsync(loginProvider, providerKey, cancellationToken);
+            if (userLogin != null)
+            {
+                return await FindUserAsync(userLogin.UserId, cancellationToken);
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the user, if any, associated with the specified, normalized email address.
+        /// </summary>
+        /// <param name="normalizedEmail">The normalized email address to return the user for.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>
+        /// The task object containing the results of the asynchronous lookup operation, the user if any associated with the specified normalized email address.
+        /// </returns>
+        public override async Task<TUser> FindByEmailAsync(string normalizedEmail, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+            var query = $"for u in Users filter u.NormalizedEmail == '{normalizedEmail}' return u";
+            var ret = await db.Cursor.PostCursorAsync<ArangoIdentityUser>(query);
+            return ret.Result.FirstOrDefault() as TUser;
+        }
+
+        /// <summary>
+        /// Retrieves all users with the specified claim.
+        /// </summary>
+        /// <param name="claim">The claim whose users should be retrieved.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>
+        /// The <see cref="Task"/> contains a list of users, if any, that contain the specified claim.
+        /// </returns>
+        public override async Task<IList<TUser>> GetUsersForClaimAsync(Claim claim, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+            if (claim == null)
+            {
+                throw new ArgumentNullException(nameof(claim));
+            }
+
+            //TODO: verify/fix query
+            var query = $"for u in Users filter u.Claims.Type == '{claim.Type}' filter u.Claims.Value == '{claim.Value}' return u";
+            var ret = await db.Cursor.PutCursorAsync<ArangoIdentityUser>(query);
+            return ret.Result.ToList() as IList<TUser>;
+        }
+
+        /// <summary>
+        /// Retrieves all users in the specified role.
+        /// </summary>
+        /// <param name="normalizedRoleName">The role whose users should be retrieved.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>
+        /// The <see cref="Task"/> contains a list of users, if any, that are in the specified role.
+        /// </returns>
+        public override async Task<IList<TUser>> GetUsersInRoleAsync(string normalizedRoleName, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+            if (string.IsNullOrEmpty(normalizedRoleName))
+            {
+                throw new ArgumentNullException(nameof(normalizedRoleName));
+            }
+
+            var query = $"for u in Users" +
+                        " for d in UserRoles" +
+                        "for r in Roles" +
+                        $"filter r.Name == '{normalizedRoleName}'" +
+                        "filter d._to == r._id" +
+                        "filter d._from == u._id" +
+                        "return u";
+            var ret = await db.Cursor.PostCursorAsync<ArangoIdentityUser>(query);
+            return ret.Result.ToList() as IList<TUser>;
+        }
+
+        /// <summary>
+        /// Get the user from the Users collection.
+        /// </summary>
+        /// <param name="userId">The user to fetch.</param>
+        /// <returns>The user as a <see cref="TUser"/></returns>
+        public async Task<TUser> GetUserByIdAsync(string userId)
+        {
+            var query = $"for u in users filter u._id == '{userId}' return u";
+            var ret = await db.Cursor.PostCursorAsync<ArangoIdentityUser>(query);
+            return ret.Result.FirstOrDefault() as TUser;
+        }
+
+        public async Task UpdateUser(TUser user)
+        {
+            await db.Document.PostDocumentAsync("Users", user as ArangoIdentityUser);
+        }
+
+        #region Token Management
+        /// <summary>
+        /// Find a user token if it exists.
+        /// </summary>
+        /// <param name="user">The token owner.</param>
+        /// <param name="loginProvider">The login provider for the token.</param>
+        /// <param name="name">The name of the token.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The user token if it exists.</returns>
+        protected override Task<TUserToken> FindTokenAsync(TUser user, string loginProvider, string name, CancellationToken cancellationToken)
+        {
+            return Task.FromResult((TUserToken)user.GetToken(loginProvider, name));
+        }
+
+        /// <summary>
+        /// Add a new user token.
+        /// </summary>
+        /// <param name="token">The token to be added.</param>
+        /// <returns></returns>
+        protected override async Task AddUserTokenAsync(TUserToken token)
+        {
+
+            var user = await GetUserByIdAsync(token.UserId as string);
+            if (user != null)
+            {
+                if (user.AddUserToken(token))
+                {
+                    await UpdateUser(user);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Remove a new user token.
+        /// </summary>
+        /// <param name="token">The token to be removed.</param>
+        /// <returns></returns>
+        protected override async Task RemoveUserTokenAsync(TUserToken token)
+        {
+            var user = await GetUserByIdAsync(token.UserId as string);
+            if (user != null)
+            {
+                if (user.RemoveUserToken(token))
+                {
+                    await UpdateUser(user);
+                }
+            }
+        }
+
+        #endregion
+
+        #region UserStoreBase overrides
+        /// <summary>
+        /// Sets the given <paramref name="userName" /> for the specified <paramref name="user"/>.
+        /// </summary>
+        /// <param name="user">The user whose name should be set.</param>
+        /// <param name="userName">The user name to set.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+        public override async Task SetUserNameAsync(TUser user, string userName, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (user.UserName != userName)
+            {
+                user.UserName = userName;
+                await UpdateUser(user);
+            }
+        }
+
+        /// <summary>
+        /// Sets the given normalized name for the specified <paramref name="user"/>.
+        /// </summary>
+        /// <param name="user">The user whose name should be set.</param>
+        /// <param name="normalizedName">The normalized name to set.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+        public override async Task SetNormalizedUserNameAsync(TUser user, string normalizedName, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (user.NormalizedUserName != normalizedName)
+            {
+                user.NormalizedUserName = normalizedName;
+                await UpdateUser(user);
+            }
+        }
+
+        /// <summary>
+        /// Sets the password hash for a user.
+        /// </summary>
+        /// <param name="user">The user to set the password hash for.</param>
+        /// <param name="passwordHash">The password hash to set.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+        public override async Task SetPasswordHashAsync(TUser user, string passwordHash, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (user.PasswordHash != passwordHash)
+            {
+                user.PasswordHash = passwordHash;
+                await UpdateUser(user);
+            }
+        }
+
+        /// <summary>
+        /// Sets the flag indicating whether the specified <paramref name="user"/>'s email address has been confirmed or not.
+        /// </summary>
+        /// <param name="user">The user whose email confirmation status should be set.</param>
+        /// <param name="confirmed">A flag indicating if the email address has been confirmed, true if the address is confirmed otherwise false.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The task object representing the asynchronous operation.</returns>
+        public override async Task SetEmailConfirmedAsync(TUser user, bool confirmed, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+            if (user.EmailConfirmed != confirmed)
+            {
+                user.EmailConfirmed = confirmed;
+                await UpdateUser(user);
+            }
+        }
+
+        /// <summary>
+        /// Sets the <paramref name="email"/> address for a <paramref name="user"/>.
+        /// </summary>
+        /// <param name="user">The user whose email should be set.</param>
+        /// <param name="email">The email to set.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The task object representing the asynchronous operation.</returns>
+        public override async Task SetEmailAsync(TUser user, string email, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (user.Email != email)
+            {
+                user.Email = email;
+                await UpdateUser(user);
+            }
+        }
+
+        /// <summary>
+        /// Sets the normalized email for the specified <paramref name="user"/>.
+        /// </summary>
+        /// <param name="user">The user whose email address to set.</param>
+        /// <param name="normalizedEmail">The normalized email to set for the specified <paramref name="user"/>.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The task object representing the asynchronous operation.</returns>
+        public override async Task SetNormalizedEmailAsync(TUser user, string normalizedEmail, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (user.NormalizedEmail != normalizedEmail)
+            {
+                user.NormalizedEmail = normalizedEmail;
+                await UpdateUser(user);
+
+            }
+            user.NormalizedEmail = normalizedEmail;
+        }
+
+        /// <summary>
+        /// Locks out a user until the specified end date has passed. Setting a end date in the past immediately unlocks a user.
+        /// </summary>
+        /// <param name="user">The user whose lockout date should be set.</param>
+        /// <param name="lockoutEnd">The <see cref="DateTimeOffset"/> after which the <paramref name="user"/>'s lockout should end.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+        public override async Task SetLockoutEndDateAsync(TUser user, DateTimeOffset? lockoutEnd, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (user.LockoutEnd != lockoutEnd)
+            {
+                user.LockoutEnd = lockoutEnd;
+                await UpdateUser(user);
+            }
+        }
+
+        /// <summary>
+        /// Records that a failed access has occurred, incrementing the failed access count.
+        /// </summary>
+        /// <param name="user">The user whose cancellation count should be incremented.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The <see cref="Task"/> that represents the asynchronous operation, containing the incremented failed access count.</returns>
+        public override async Task<int> IncrementAccessFailedCountAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+            user.AccessFailedCount++;
+            await UpdateUser(user);
+            return user.AccessFailedCount;
+        }
+
+        /// <summary>
+        /// Resets a user's failed access count.
+        /// </summary>
+        /// <param name="user">The user whose failed access count should be reset.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+        /// <remarks>This is typically called after the account is successfully accessed.</remarks>
+        public override async Task ResetAccessFailedCountAsync(TUser user, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (user.AccessFailedCount != 0)
+            {
+                user.AccessFailedCount = 0;
+                await UpdateUser(user);
+            }
+        }
+
+        /// <summary>
+        /// Set the flag indicating if the specified <paramref name="user"/> can be locked out..
+        /// </summary>
+        /// <param name="user">The user whose ability to be locked out should be set.</param>
+        /// <param name="enabled">A flag indicating if lock out can be enabled for the specified <paramref name="user"/>.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+        public override async Task SetLockoutEnabledAsync(TUser user, bool enabled, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (user.LockoutEnabled != enabled)
+            {
+                user.LockoutEnabled = enabled;
+                await UpdateUser(user);
+            }
+        }
+
+        /// <summary>
+        /// Sets the telephone number for the specified <paramref name="user"/>.
+        /// </summary>
+        /// <param name="user">The user whose telephone number should be set.</param>
+        /// <param name="phoneNumber">The telephone number to set.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+        public override async Task SetPhoneNumberAsync(TUser user, string phoneNumber, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+            if (user.PhoneNumber != phoneNumber)
+            {
+                user.PhoneNumber = phoneNumber;
+                await UpdateUser(user);
+            }
+        }
+
+        /// <summary>
+        /// Sets a flag indicating if the specified <paramref name="user"/>'s phone number has been confirmed..
+        /// </summary>
+        /// <param name="user">The user whose telephone number confirmation status should be set.</param>
+        /// <param name="confirmed">A flag indicating whether the user's telephone number has been confirmed.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+        public override async Task SetPhoneNumberConfirmedAsync(TUser user, bool confirmed, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            if (user.PhoneNumberConfirmed != confirmed)
+            {
+                user.PhoneNumberConfirmed = confirmed;
+                await UpdateUser(user);
+            }
+        }
+
+        /// <summary>
+        /// Sets the provided security <paramref name="stamp"/> for the specified <paramref name="user"/>.
+        /// </summary>
+        /// <param name="user">The user whose security stamp should be set.</param>
+        /// <param name="stamp">The security stamp to set.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+        public override async Task SetSecurityStampAsync(TUser user, string stamp, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+            if (stamp == null)
+            {
+                throw new ArgumentNullException(nameof(stamp));
+            }
+
+            if (user.SecurityStamp != stamp)
+            {
+                user.SecurityStamp = stamp;
+                await UpdateUser(user);
+            }
+        }
+
+        /// <summary>
+        /// Sets a flag indicating whether the specified <paramref name="user"/> has two factor authentication enabled or not,
+        /// as an asynchronous operation.
+        /// </summary>
+        /// <param name="user">The user whose two factor authentication enabled status should be set.</param>
+        /// <param name="enabled">A flag indicating whether the specified <paramref name="user"/> has two factor authentication enabled.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+        public override async Task SetTwoFactorEnabledAsync(TUser user, bool enabled, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+            if (user.TwoFactorEnabled != enabled)
+            {
+                user.TwoFactorEnabled = enabled;
+                await UpdateUser(user);
+            }
+        }
+
+        /// <summary>
+        /// Sets the token value for a particular user.
+        /// </summary>
+        /// <param name="user">The user.</param>
+        /// <param name="loginProvider">The authentication provider for the token.</param>
+        /// <param name="name">The name of the token.</param>
+        /// <param name="value">The value of the token.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+        public override async Task SetTokenAsync(TUser user, string loginProvider, string name, string value, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
+            var token = await FindTokenAsync(user, loginProvider, name, cancellationToken);
+            if (token == null)
+            {
+                if (user.AddUserToken(CreateUserToken(user, loginProvider, name, value)))
+                {
+                    await UpdateUser(user);
+                }
+                //await AddUserTokenAsync(CreateUserToken(user, loginProvider, name, value));
+            }
+            else
+            {
+                if (user.SetToken(token, value))
+                {
+                    await UpdateUser(user);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Deletes a token for a user.
+        /// </summary>
+        /// <param name="user">The user.</param>
+        /// <param name="loginProvider">The authentication provider for the token.</param>
+        /// <param name="name">The name of the token.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+        public override async Task RemoveTokenAsync(TUser user, string loginProvider, string name, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+            var entry = await FindTokenAsync(user, loginProvider, name, cancellationToken);
+            if (entry != null)
+            {
+                if (user.RemoveUserToken(entry))
+                {
+                    await UpdateUser(user);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Returns the token value.
+        /// </summary>
+        /// <param name="user">The user.</param>
+        /// <param name="loginProvider">The authentication provider for the token.</param>
+        /// <param name="name">The name of the token.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+        public override async Task<string> GetTokenAsync(TUser user, string loginProvider, string name, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+            var entry = await FindTokenAsync(user, loginProvider, name, cancellationToken);
+            return entry?.Value;
+        }
+
+        private const string InternalLoginProvider = "[AspNetUserStore]";
+        private const string AuthenticatorKeyTokenName = "AuthenticatorKey";
+        private const string RecoveryCodeTokenName = "RecoveryCodes";
+
+        /// <summary>
+        /// Sets the authenticator key for the specified <paramref name="user"/>.
+        /// </summary>
+        /// <param name="user">The user whose authenticator key should be set.</param>
+        /// <param name="key">The authenticator key to set.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+        public override Task SetAuthenticatorKeyAsync(TUser user, string key, CancellationToken cancellationToken)
+            => SetTokenAsync(user, InternalLoginProvider, AuthenticatorKeyTokenName, key, cancellationToken);
+
+        /// <summary>
+        /// Get the authenticator key for the specified <paramref name="user" />.
+        /// </summary>
+        /// <param name="user">The user whose security stamp should be set.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The <see cref="Task"/> that represents the asynchronous operation, containing the security stamp for the specified <paramref name="user"/>.</returns>
+        public override Task<string> GetAuthenticatorKeyAsync(TUser user, CancellationToken cancellationToken)
+            => GetTokenAsync(user, InternalLoginProvider, AuthenticatorKeyTokenName, cancellationToken);
+
+        /// <summary>
+        /// Returns how many recovery code are still valid for a user.
+        /// </summary>
+        /// <param name="user">The user who owns the recovery code.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The number of valid recovery codes for the user..</returns>
+        public override async Task<int> CountCodesAsync(TUser user, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+            var mergedCodes = await GetTokenAsync(user, InternalLoginProvider, RecoveryCodeTokenName, cancellationToken) ?? "";
+            if (mergedCodes.Length > 0)
+            {
+                return mergedCodes.Split(';').Length;
+            }
+            return 0;
+        }
+
+        /// <summary>
+        /// Updates the recovery codes for the user while invalidating any previous recovery codes.
+        /// </summary>
+        /// <param name="user">The user to store new recovery codes for.</param>
+        /// <param name="recoveryCodes">The new recovery codes for the user.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The new recovery codes for the user.</returns>
+        public override Task ReplaceCodesAsync(TUser user, IEnumerable<string> recoveryCodes, CancellationToken cancellationToken)
+        {
+            var mergedCodes = string.Join(";", recoveryCodes);
+            return SetTokenAsync(user, InternalLoginProvider, RecoveryCodeTokenName, mergedCodes, cancellationToken);
+        }
+
+        /// <summary>
+        /// Returns whether a recovery code is valid for a user. Note: recovery codes are only valid
+        /// once, and will be invalid after use.
+        /// </summary>
+        /// <param name="user">The user who owns the recovery code.</param>
+        /// <param name="code">The recovery code to use.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>True if the recovery code was found for the user.</returns>
+        public override async Task<bool> RedeemCodeAsync(TUser user, string code, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ThrowIfDisposed();
+
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+            if (code == null)
+            {
+                throw new ArgumentNullException(nameof(code));
+            }
+
+            var mergedCodes = await GetTokenAsync(user, InternalLoginProvider, RecoveryCodeTokenName, cancellationToken) ?? "";
+            var splitCodes = mergedCodes.Split(';');
+            if (!splitCodes.Contains(code)) return false;
+            var updatedCodes = new List<string>(splitCodes.Where(s => s != code));
+            await ReplaceCodesAsync(user, updatedCodes, cancellationToken);
+            return true;
+        }
+
+        public override IQueryable<TUser> Users { get; }
+
+        #endregion
+
 
     }
 }

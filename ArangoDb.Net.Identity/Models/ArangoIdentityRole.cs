@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Identity;
 
-namespace ArangoDb.Net.Identity
+namespace ArangoDb.Net.Identity.Models
 {
     public class ArangoIdentityRole<TKey> : IdentityRole<TKey>, IClaimHolder
         where TKey : IEquatable<TKey>

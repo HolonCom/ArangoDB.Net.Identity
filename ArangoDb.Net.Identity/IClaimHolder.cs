@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using ArangoDb.Net.Identity.Models;
 
 namespace ArangoDb.Net.Identity
 {
