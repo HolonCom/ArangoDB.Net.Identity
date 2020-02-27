@@ -23,9 +23,9 @@ namespace AspNetCore.Identity.ArangoDbCore
     public class ArangoUserStore : ArangoUserStore<ArangoIdentityUser<string>>
     {
         /// <summary>
-        /// Constructs a new instance of <see cref="MongoUserStore"/>.
+        /// Constructs a new instance of <see cref="ArangoUserStore"/>.
         /// </summary>
-        /// <param name="context">The <see cref="MongoDbContext"/>.</param>
+        /// <param name="context">The <see cref="ArangoDbContext"/>.</param>
         /// <param name="describer">The <see cref="IdentityErrorDescriber"/>.</param>
         public ArangoUserStore(IArangoDbContext context, IdentityErrorDescriber describer = null) : base(context, describer) { }
     }
@@ -38,9 +38,9 @@ namespace AspNetCore.Identity.ArangoDbCore
         where TUser : ArangoIdentityUser<string>, new()
     {
         /// <summary>
-        /// Constructs a new instance of <see cref="MongoUserStore{TUser}"/>.
+        /// Constructs a new instance of <see cref="ArangoUserStore{TUser}"/>.
         /// </summary>
-        /// <param name="context">The <see cref="MongoDbContext"/>.</param>
+        /// <param name="context">The <see cref="ArangoDbContext"/>.</param>
         /// <param name="describer">The <see cref="IdentityErrorDescriber"/>.</param>
         public ArangoUserStore(IArangoDbContext context, IdentityErrorDescriber describer = null) : base(context, describer) { }
     }
@@ -57,9 +57,9 @@ namespace AspNetCore.Identity.ArangoDbCore
         where TContext : IArangoDbContext
     {
         /// <summary>
-        /// Constructs a new instance of <see cref="MongoUserStore{TUser, TRole, TContext}"/>.
+        /// Constructs a new instance of <see cref="ArangoUserStore{TUser, TRole, TContext}"/>.
         /// </summary>
-        /// <param name="context">The <see cref="MongoDbContext"/>.</param>
+        /// <param name="context">The <see cref="ArangoDbContext"/>.</param>
         /// <param name="describer">The <see cref="IdentityErrorDescriber"/>.</param>
         public ArangoUserStore(TContext context, IdentityErrorDescriber describer = null) : base(context, describer) { }
     }

@@ -9,7 +9,6 @@ using AspNetCore.Identity.ArangoDbCore.Models;
 using AspNetCore.Identity.ArangoDbCore.Test.Infrastructure;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Xunit;
@@ -41,7 +40,6 @@ namespace AspNetCore.Identity.ArangoDbCore.Test.Specification
         /// Configure the service collection used for tests.
         /// </summary>
         /// <param name="services"></param>
-        /// <param name="mongoRepository"></param>
         protected override void SetupIdentityServices(IServiceCollection services)
         {
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
@@ -61,7 +59,7 @@ namespace AspNetCore.Identity.ArangoDbCore.Test.Specification
             if (concurrentSetup)
             {
                 //TODO: add concurrency support
-                //services.ConfigureMongoDbIdentity<TUser, TRole, TKey>(Container.ArangoDbIdentityConfiguration, Container.ArangoRepositoryConcurrent.Context);
+                //services.ConfigureArangoDbIdentity<TUser, TRole, TKey>(Container.ArangoDbIdentityConfiguration, Container.ArangoRepositoryConcurrent.Context);
             }
             else
             {

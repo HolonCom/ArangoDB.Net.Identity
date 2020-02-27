@@ -64,17 +64,49 @@
         <e p="AspNetCore.Identity.ArangoDbCore.Test" t="Include">
           <e p="ApiConsistencyTest.cs" t="Include" />
           <e p="ArangoDbStoreTestBase.cs" t="Include" />
+          <e p="UserStoreTest.cs" t="Include" />
           <e p="Utilities" t="Include">
             <e p="ArangoDatabaseFixture.cs" t="Include" />
           </e>
         </e>
         <e p="AspNetCore.Identity.ArangoDbCore.Test.csproj" t="IncludeRecursive" />
+        <e p="AspNetCore.Identity.Test" t="Include">
+          <e p="ApiConsistencyTest.cs" t="Include" />
+          <e p="ClaimsIdentityExtensionsTest.cs" t="Include" />
+          <e p="IdentityBuilderTest.cs" t="Include" />
+          <e p="IdentityOptionsTest.cs" t="Include" />
+          <e p="IdentityResultTest.cs" t="Include" />
+          <e p="PasswordHasherTest.cs" t="Include" />
+          <e p="PasswordValidatorTest.cs" t="Include" />
+          <e p="RoleManagerTest.cs" t="Include" />
+          <e p="RoleValidatorTest.cs" t="Include" />
+          <e p="SecurityStampTest.cs" t="Include" />
+          <e p="SignInManagerTest.cs" t="Include" />
+          <e p="UserClaimsPrincipalFactoryTest.cs" t="Include" />
+          <e p="UserManagerTest.cs" t="Include" />
+          <e p="UserValidatorTest.cs" t="Include" />
+        </e>
         <e p="Infrastructure" t="Include">
           <e p="Container.cs" t="Include" />
         </e>
         <e p="MockLoggerFactory.cs" t="Include" />
         <e p="Shared" t="Include">
+          <e p="ATokenProvider.cs" t="Include" />
           <e p="ApiConsistencyTestBase.cs" t="Include" />
+          <e p="EmptyStore.cs" t="Include" />
+          <e p="MockHelpers.cs" t="Include" />
+          <e p="NoOpTokenProvider.cs" t="Include" />
+          <e p="NoopHandler.cs" t="Include" />
+          <e p="NoopRoleStore.cs" t="Include" />
+          <e p="NoopUserStore.cs" t="Include" />
+          <e p="NotImplementedStore.cs" t="Include" />
+          <e p="TestRole.cs" t="Include" />
+          <e p="TestRoleClaim.cs" t="Include" />
+          <e p="TestUser.cs" t="Include" />
+          <e p="TestUserClaim.cs" t="Include" />
+          <e p="TestUserLogin.cs" t="Include" />
+          <e p="TestUserRole.cs" t="Include" />
+          <e p="TestUserToken.cs" t="Include" />
         </e>
         <e p="Specification" t="Include">
           <e p="IdentityResultAssert.cs" t="Include" />

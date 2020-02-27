@@ -87,7 +87,7 @@ public class ArangoIdentityUser<TKey> : IdentityUser<TKey>, IClaimHolder
         }
 
         /// <summary>
-        /// Initialize the field of the MongoIdentityUser
+        /// Initialize the field of the ArangoIdentityUser
         /// </summary>
         private void InitializeFields()
         {
@@ -319,6 +319,10 @@ public class ArangoIdentityUser<TKey> : IdentityUser<TKey>, IClaimHolder
     /// </summary>
     public class ArangoIdentityUser : ArangoIdentityUser<string>
     {
+        public ArangoIdentityUser()
+        {
+            //do not delete
+        }
         public override string Id { get; set; }
 
         public ArangoIdentityUser(string userName, string email) : base(userName, email)

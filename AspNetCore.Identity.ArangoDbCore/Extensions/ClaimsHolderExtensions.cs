@@ -9,9 +9,9 @@ namespace AspNetCore.Identity.ArangoDbCore.Extensions
     public static class ClaimsHolderExtensions
     {
         /// <summary>
-        /// Creates a <see cref="Claim"/> object from a <see cref="MongoClaim"/>
+        /// Creates a <see cref="Claim"/> object from a <see cref="ArangoClaim"/>
         /// </summary>
-        /// <param name="arangoClaim">A <see cref="MongoClaim"/>.</param>
+        /// <param name="arangoClaim">A <see cref="ArangoClaim"/>.</param>
         /// <returns> A <see cref="Claim"/>.</returns>
         public static Claim ToClaim(this ArangoClaim arangoClaim)
         {
@@ -105,10 +105,10 @@ namespace AspNetCore.Identity.ArangoDbCore.Extensions
         }
 
         /// <summary>
-        /// Creates a <see cref="MongoClaim"/> object from a <see cref="Claim"/>
+        /// Creates a <see cref="ArangoClaim"/> object from a <see cref="Claim"/>
         /// </summary>
         /// <param name="claim">The <see cref="Claim"/>.</param>
-        /// <returns>A <see cref="MongoClaim"/>.</returns>
+        /// <returns>A <see cref="ArangoClaim"/>.</returns>
         public static ArangoClaim ToArangoClaim(this Claim claim)
         {
             return new ArangoClaim

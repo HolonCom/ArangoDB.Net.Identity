@@ -2,20 +2,18 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using AspNetCore.Identity.ArangoDbCore.Infrastructure;
 using AspNetCore.Identity.ArangoDbCore.Interfaces;
 using AspNetCore.Identity.ArangoDbCore.Models;
 using AspNetCore.Identity.ArangoDbCore.Test.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata.Conventions;
 
 namespace AspNetCore.Identity.ArangoDbCore.Test.AspNetCore.Identity.ArangoDbCore.Test.Utilities
 {
-    public class ArangoDatabaseFixture<TUser, TKey>: IDisposable
+    public class ArangoDatabaseFixture<TUser, TRole>: IDisposable
         where TUser : ArangoIdentityUser
-        where TKey : IEquatable<TKey>
+        where TRole: ArangoIdentityRole
     {
         public IArangoDbContext Context;
 
@@ -26,11 +24,12 @@ namespace AspNetCore.Identity.ArangoDbCore.Test.AspNetCore.Identity.ArangoDbCore
         }
 
         public ConcurrentBag<TUser> UsersToDelete { get; set; }
+        public ConcurrentBag<TRole> RolesToDelete { get; set; }
 
         public void Dispose()
         {
-            DisposeUsers(UsersToDelete.ToList().Select(e => e.Id)).Wait();
-
+            DisposeUsers(UsersToDelete.ToList().Select(e => e._id)).Wait();
+            DisposeUserRoles(RolesToDelete.ToList().Select(e => e._id)).Wait();
         }
 
         public async Task DisposeUserRoles(IEnumerable<string> roleIds)
@@ -77,33 +76,34 @@ namespace AspNetCore.Identity.ArangoDbCore.Test.AspNetCore.Identity.ArangoDbCore
         }
     }
 
-    public class ArangoDatabaseFixture<TUser, TRole, TKey> : ArangoDatabaseFixture<TUser, TKey>, IDisposable
-        where TUser : ArangoIdentityUser
-        where TRole : ArangoIdentityRole
-        where TKey : IEquatable<TKey>
-    {
-        public ArangoDatabaseFixture()
-        {
-            Context = new ArangoDbContext(Container.Settings);
-            UsersToDelete = new ConcurrentBag<TUser>();
-            RolesToDelete = new ConcurrentBag<TRole>();
-        }
-        public ConcurrentBag<TRole> RolesToDelete { get; set; }
+    // public class ArangoDatabaseFixture<TUser, TRole, TKey> : ArangoDatabaseFixture<TUser, TKey>, IDisposable
+    //     where TUser : ArangoIdentityUser
+    //     where TRole : ArangoIdentityRole
+    //     where TKey : IEquatable<TKey>
+    // {
+    //     public ArangoDatabaseFixture()
+    //     {
+    //         Context = new ArangoDbContext(Container.Settings);
+    //         UsersToDelete = new ConcurrentBag<TUser>();
+    //         RolesToDelete = new ConcurrentBag<TRole>();
+    //     }
+    //
+    //     public new void Dispose()
+    //     {
+    //         var userIds = UsersToDelete.ToList().Select(e => e.Id);
+    //         var idList = userIds.ToList();
+    //         if (idList.Any())
+    //         {
+    //             DisposeUsers(idList).Wait();
+    //         }
+    //         var roleIds = RolesToDelete.ToList().Select(e => e.Id).ToList();
+    //         if (roleIds.Any())
+    //         {
+    //             DisposeUserRoles(roleIds).Wait();
+    //         }
+    //     }
+    //
+    // }
 
-        public new void Dispose()
-        {
-            var userIds = UsersToDelete.ToList().Select(e => e.Id);
-            var idList = userIds.ToList();
-            if (idList.Any())
-            {
-                DisposeUsers(idList).Wait();
-            }
-            var roleIds = RolesToDelete.ToList().Select(e => e.Id).ToList();
-            if (roleIds.Any())
-            {
-                DisposeUserRoles(roleIds).Wait();
-            }
-        }
 
-    }
 }

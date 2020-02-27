@@ -41,7 +41,7 @@ namespace AspNetCore.Identity.ArangoDbCore
         /// </summary>
         /// <param name="context">The <see cref="IArangoDbContext"/>.</param>
         /// <param name="describer">The <see cref="IdentityErrorDescriber"/>.</param>
-        public ArangoRoleStore(TContext context, IdentityErrorDescriber describer = null) : base(context, describer) { }
+        public ArangoRoleStore(IArangoDbContext context, IdentityErrorDescriber describer = null) : base(context, describer) { }
     }
 
     /// <summary>
