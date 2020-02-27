@@ -3,48 +3,97 @@
   <component name="ContentModelStore">
     <e p="$USER_HOME$/.Rider2019.3/system/extResources" t="IncludeRecursive" />
     <e p="$USER_HOME$/.Rider2019.3/system/resharper-host/local/Transient/ReSharperHost/v193/SolutionCaches/_ArangoDb.Net.Identity.-929889965.00" t="ExcludeRecursive" />
+    <e p="$USER_HOME$/.nuget/packages/microsoft.net.test.sdk/16.2.0/build/netcoreapp1.0" t="Include">
+      <e p="Microsoft.NET.Test.Sdk.Program.cs" t="Include" />
+    </e>
+    <e p="$USER_HOME$/.nuget/packages/xunit.runner.visualstudio/2.4.0/build/netcoreapp1.0/xunit.runner.reporters.netcoreapp10.dll" t="Include" />
+    <e p="$USER_HOME$/.nuget/packages/xunit.runner.visualstudio/2.4.0/build/netcoreapp1.0/xunit.runner.utility.netcoreapp10.dll" t="Include" />
+    <e p="$USER_HOME$/.nuget/packages/xunit.runner.visualstudio/2.4.0/build/netcoreapp1.0/xunit.runner.visualstudio.dotnetcore.testadapter.dll" t="Include" />
     <e p="$PROJECT_DIR$" t="IncludeFlat">
       <e p=".git/info/exclude" t="IncludeRecursive" />
-      <e p="ArangoDb.Net.Identity" t="IncludeRecursive">
+      <e p="ArangoDb.Net.Identity.sln" t="IncludeFlat" />
+      <e p="AspNetCore.Identity.ArangoDbCore" t="IncludeRecursive">
         <e p="ArangoBaseDocument.cs" t="Include" />
-        <e p="ArangoDb.Net.Identity.csproj" t="IncludeRecursive" />
         <e p="ArangoIdentityBuilderExtensions.cs" t="Include" />
         <e p="ArangoIdentityUserLogin.cs" t="Include" />
         <e p="ArangoIdentityUserRole.cs" t="Include" />
+        <e p="ArangoRoleStore.cs" t="Include" />
         <e p="ArangoUserStore.cs" t="Include" />
+        <e p="AspNetCore.Identity.ArangoDbCore.csproj" t="IncludeRecursive" />
         <e p="Constants.cs" t="Include" />
         <e p="Extensions" t="Include">
+          <e p="ArangoDbBuilderExtensions.cs" t="Include" />
           <e p="ClaimsHolderExtensions.cs" t="Include" />
+          <e p="ServiceCollectionExtensions.cs" t="Include" />
           <e p="StringExtensions.cs" t="Include" />
         </e>
-        <e p="IArangoDbContext.cs" t="Include" />
         <e p="IClaimHolder.cs" t="Include" />
-        <e p="IdentityRoleClaim.cs" t="Include" />
-        <e p="IdentityUserClaim.cs" t="Include" />
         <e p="IdentityUserLogin.cs" t="Include" />
-        <e p="IdentityUserRole.cs" t="Include" />
-        <e p="IdentityUserToken.cs" t="Include" />
+        <e p="Infrastructure" t="Include">
+          <e p="ArangoDbContext.cs" t="Include" />
+          <e p="ArangoRepository.cs" t="Include" />
+          <e p="IArangoDbRepository.cs" t="Include" />
+        </e>
+        <e p="Interfaces" t="Include">
+          <e p="ArangoDbIdentityConfiguration.cs" t="Include" />
+          <e p="ArangoDbSettings.cs" t="Include" />
+          <e p="IArangoDbContext.cs" t="Include" />
+          <e p="IClaimHolder.cs" t="Include" />
+        </e>
         <e p="Models" t="Include">
           <e p="ArangoClaim.cs" t="Include" />
           <e p="ArangoIdentityRole.cs" t="Include" />
+          <e p="ArangoIdentityRoleClaim.cs" t="Include" />
           <e p="ArangoIdentityUser.cs" t="Include" />
           <e p="ArangoUserLoginInfo.cs" t="Include" />
+          <e p="EdgeRecord.cs" t="Include" />
           <e p="Token.cs" t="Include" />
         </e>
         <e p="Resources.Designer.cs" t="Include" />
         <e p="Resources.resx" t="Include" />
-        <e p="UserStore.cs" t="Include" />
         <e p="bin" t="ExcludeRecursive" />
         <e p="obj" t="ExcludeRecursive">
           <e p="Debug" t="Include">
             <e p="netcoreapp3.1" t="Include">
-              <e p="ArangoDb.Net.Identity.AssemblyInfo.cs" t="Include" />
+              <e p="AspNetCore.Identity.ArangoDbCore.AssemblyInfo.cs" t="Include" />
             </e>
           </e>
         </e>
       </e>
-      <e p="ArangoDb.Net.Identity.sln" t="IncludeFlat" />
+      <e p="AspNetCore.Identity.ArangoDbCore.Test" t="IncludeRecursive">
+        <e p="AspNetCore.Identity.ArangoDbCore.Test" t="Include">
+          <e p="ApiConsistencyTest.cs" t="Include" />
+          <e p="ArangoDbStoreTestBase.cs" t="Include" />
+          <e p="Utilities" t="Include">
+            <e p="ArangoDatabaseFixture.cs" t="Include" />
+          </e>
+        </e>
+        <e p="AspNetCore.Identity.ArangoDbCore.Test.csproj" t="IncludeRecursive" />
+        <e p="Infrastructure" t="Include">
+          <e p="Container.cs" t="Include" />
+        </e>
+        <e p="MockLoggerFactory.cs" t="Include" />
+        <e p="Shared" t="Include">
+          <e p="ApiConsistencyTestBase.cs" t="Include" />
+        </e>
+        <e p="Specification" t="Include">
+          <e p="IdentityResultAssert.cs" t="Include" />
+          <e p="IdentitySpecificationTestBase.cs" t="Include" />
+          <e p="TestLogger.cs" t="Include" />
+          <e p="UserManagerSpecificationTestBase.cs" t="Include" />
+        </e>
+        <e p="bin" t="ExcludeRecursive" />
+        <e p="obj" t="ExcludeRecursive">
+          <e p="Debug" t="Include">
+            <e p="netcoreapp3.1" t="Include">
+              <e p="AspNetCore.Identity.ArangoDbCore.Test.AssemblyInfo.cs" t="Include" />
+            </e>
+          </e>
+        </e>
+      </e>
       <e p="packages" t="ExcludeRecursive" />
+      <e p="src" t="Include" />
+      <e p="test" t="Include" />
     </e>
   </component>
 </project>

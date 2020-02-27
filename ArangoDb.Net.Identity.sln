@@ -1,6 +1,12 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArangoDb.Net.Identity", "ArangoDb.Net.Identity\ArangoDb.Net.Identity.csproj", "{808392A9-7008-4EB7-8604-F02006E4913E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspNetCore.Identity.ArangoDbCore", "AspNetCore.Identity.ArangoDbCore\AspNetCore.Identity.ArangoDbCore.csproj", "{808392A9-7008-4EB7-8604-F02006E4913E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{452369EA-DE68-4C17-906A-69975DBA0667}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspNetCore.Identity.ArangoDbCore.Test", "AspNetCore.Identity.ArangoDbCore.Test\AspNetCore.Identity.ArangoDbCore.Test.csproj", "{21E7BC06-F28D-4081-83C3-DAD49F5BBA7B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{3A40DCFD-2799-46F7-AADA-FE63D899DFFB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -12,5 +18,13 @@ Global
 		{808392A9-7008-4EB7-8604-F02006E4913E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{808392A9-7008-4EB7-8604-F02006E4913E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{808392A9-7008-4EB7-8604-F02006E4913E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{21E7BC06-F28D-4081-83C3-DAD49F5BBA7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{21E7BC06-F28D-4081-83C3-DAD49F5BBA7B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{21E7BC06-F28D-4081-83C3-DAD49F5BBA7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{21E7BC06-F28D-4081-83C3-DAD49F5BBA7B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{21E7BC06-F28D-4081-83C3-DAD49F5BBA7B} = {452369EA-DE68-4C17-906A-69975DBA0667}
+		{808392A9-7008-4EB7-8604-F02006E4913E} = {3A40DCFD-2799-46F7-AADA-FE63D899DFFB}
 	EndGlobalSection
 EndGlobal
