@@ -5,7 +5,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="ArangoDBNetStandard" Version="3.0.0" />
+        
+        <PackageReference Include="Core.Arango" Version="3.11.5" />
         <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="7.0.20" />
         <PackageReference Include="Microsoft.Extensions.Identity.Core" Version="7.0.20" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" />
