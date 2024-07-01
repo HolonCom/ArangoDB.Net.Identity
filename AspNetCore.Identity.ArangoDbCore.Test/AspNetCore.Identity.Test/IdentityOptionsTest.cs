@@ -38,7 +38,7 @@ namespace AspNetCore.Identity.ArangoDbCore.Test.AspNetCore.Identity.Test
         public void CanCustomizeIdentityOptions()
         {
             var services = new ServiceCollection().Configure<IdentityOptions>(options => options.Password.RequiredLength = -1);
-            services.AddIdentity<TestUser,TestRole>();
+            services.AddIdentityCore<TestUser>().AddRoles<TestRole>();
             var serviceProvider = services.BuildServiceProvider();
 
             var setup = serviceProvider.GetRequiredService<IConfigureOptions<IdentityOptions>>();
@@ -58,7 +58,7 @@ namespace AspNetCore.Identity.ArangoDbCore.Test.AspNetCore.Identity.Test
         public void CanSetupIdentityOptions()
         {
             var services = new ServiceCollection();
-            services.AddIdentity<TestUser,TestRole>(options => options.User.RequireUniqueEmail = true);
+            services.AddIdentityCore<TestUser>(options => options.User.RequireUniqueEmail = true).AddRoles<TestRole>();
             var serviceProvider = services.BuildServiceProvider();
 
             var optionsGetter = serviceProvider.GetRequiredService<IOptions<IdentityOptions>>();

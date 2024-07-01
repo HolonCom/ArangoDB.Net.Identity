@@ -19,7 +19,10 @@ namespace AspNetCore.Identity.ArangoDbCore.Test.AspNetCore.Identity.Test
         {
             var services = new ServiceCollection()
                 .AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
-            services.AddIdentity<TestUser,TestRole>().AddUserStore<MyUberThingy>();
+            services
+                .AddIdentityCore<TestUser>()
+				.AddRoles<TestRole>()
+                .AddUserStore<MyUberThingy>();
             var thingy = services.BuildServiceProvider().GetRequiredService<IUserStore<TestUser>>() as MyUberThingy;
             Assert.NotNull(thingy);
         }
@@ -29,7 +32,10 @@ namespace AspNetCore.Identity.ArangoDbCore.Test.AspNetCore.Identity.Test
         {
             var services = new ServiceCollection()
                 .AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
-            services.AddIdentity<TestUser,TestRole>().AddRoleStore<MyUberThingy>();
+            services
+                .AddIdentityCore<TestUser>()
+                .AddRoles<TestRole>()
+                .AddRoleStore<MyUberThingy>();
             var thingy = services.BuildServiceProvider().GetRequiredService<IRoleStore<TestRole>>() as MyUberThingy;
             Assert.NotNull(thingy);
         }

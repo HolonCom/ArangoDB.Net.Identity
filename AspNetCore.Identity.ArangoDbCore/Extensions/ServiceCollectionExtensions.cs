@@ -78,13 +78,30 @@ namespace AspNetCore.Identity.ArangoDbCore.Extensions
         {
             ValidateArangoDbSettings(arangoDbIdentityConfiguration.ArangoDbSettings);
             if (arangoDbContext == null)
-                services.AddIdentity<TUser, TRole>().AddArangoDbStores<TUser, TRole, TKey>(
-                  arangoDbIdentityConfiguration.ArangoDbSettings.UserId,
-                  arangoDbIdentityConfiguration.ArangoDbSettings.Database,
-                  arangoDbIdentityConfiguration.ArangoDbSettings.UserId,
-                  arangoDbIdentityConfiguration.ArangoDbSettings.Password).AddDefaultTokenProviders();
+                services
+                    .AddIdentityCore<TUser>(options =>
+                    {
+                        // Configure your Identity options here
+                    })
+                    .AddRoles<TRole>()
+                    .AddArangoDbStores<TUser, TRole, TKey>(
+                          arangoDbIdentityConfiguration.ArangoDbSettings.UserId,
+                          arangoDbIdentityConfiguration.ArangoDbSettings.Database,
+                          arangoDbIdentityConfiguration.ArangoDbSettings.UserId,
+                          arangoDbIdentityConfiguration.ArangoDbSettings.Password)
+                    // todo #RS activate token providers, but probably via params??
+                    //.AddTokenProvider<DataProtectorTokenProvider<TUser>>(TokenOptions.DefaultProvider)
+                    //.AddTokenProvider<EmailTokenProvider<TUser>>(TokenOptions.DefaultEmailProvider)
+                    //.AddTokenProvider<PhoneNumberTokenProvider<TUser>>(TokenOptions.DefaultPhoneProvider)
+                    ;
             else
-                services.AddIdentity<TUser, TRole>().AddArangoDbStores<IArangoDbContext>(arangoDbContext).AddDefaultTokenProviders();
+                services
+                    .AddIdentityCore<TUser>()
+                    .AddRoles<TRole>()
+                    .AddArangoDbStores<IArangoDbContext>(arangoDbContext)
+                    // todo #RS activate token providers, but probably via params??
+                    //.AddDefaultTokenProviders()
+                    ;
             if (arangoDbIdentityConfiguration.IdentityOptionsAction == null)
                 return;
             services.Configure<IdentityOptions>(arangoDbIdentityConfiguration.IdentityOptionsAction);
@@ -97,11 +114,17 @@ namespace AspNetCore.Identity.ArangoDbCore.Extensions
           where TRole : ArangoIdentityRole, new()
           where TKey : IEquatable<TKey>
         {
-            services.AddIdentity<TUser, TRole>().AddArangoDbStores<TUser, TRole, TKey>(
-              arangoDbIdentityConfiguration.ArangoDbSettings.Uri,
-              arangoDbIdentityConfiguration.ArangoDbSettings.Database,
-              arangoDbIdentityConfiguration.ArangoDbSettings.UserId,
-              arangoDbIdentityConfiguration.ArangoDbSettings.Password).AddDefaultTokenProviders();
+            services
+                .AddIdentityCore<TUser>()
+                .AddRoles<TRole>()
+                .AddArangoDbStores<TUser, TRole, TKey>(
+                  arangoDbIdentityConfiguration.ArangoDbSettings.Uri,
+                  arangoDbIdentityConfiguration.ArangoDbSettings.Database,
+                  arangoDbIdentityConfiguration.ArangoDbSettings.UserId,
+                  arangoDbIdentityConfiguration.ArangoDbSettings.Password)
+                // todo #RS activate token providers, but probably via params??
+                //.AddDefaultTokenProviders()
+                ;
             if (arangoDbIdentityConfiguration.IdentityOptionsAction == null)
                 return;
             services.Configure<IdentityOptions>(arangoDbIdentityConfiguration.IdentityOptionsAction);
