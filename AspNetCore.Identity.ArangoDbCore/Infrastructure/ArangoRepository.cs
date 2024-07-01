@@ -4,11 +4,11 @@ using AspNetCore.Identity.ArangoDbCore.Interfaces;
 namespace AspNetCore.Identity.ArangoDbCore.Infrastructure
 {
 
-    public class ArangoRepository: IArangoDbRepository
+    public class ArangoRepository : IArangoDbRepository
     {
         public ArangoRepository(string uri, string database, string user, string password)
         {
-            Context = new ArangoDbContext(new ArangoDbSettings(){Database = database,Uri = uri,UserId = user,Password = password});
+            Context = new ArangoDbContext(new ArangoDbSettings() { Database = database, Uri = uri, UserId = user, Password = password });
         }
 
         public ArangoRepository(ArangoDbSettings arangoDbSettings)
