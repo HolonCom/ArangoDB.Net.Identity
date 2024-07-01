@@ -10,7 +10,7 @@ using AspNetCore.Identity.ArangoDbCore.Interfaces;
 using AspNetCore.Identity.ArangoDbCore.Models;
 using Microsoft.AspNetCore.Identity;
 
-namespace AspNetCore.Identity.ArangoDbCore
+namespace AspNetCore.Identity.ArangoDbCore.Stores
 {
     /// <summary>
     /// Creates a new instance of a persistence store for roles.
@@ -81,7 +81,7 @@ namespace AspNetCore.Identity.ArangoDbCore
         where TKey : IEquatable<TKey>
         where TContext : IArangoDbContext
         where TUserRole : ArangoIdentityUserRole<TKey>, new()
-        where TRoleClaim: IdentityRoleClaim<TKey>, new()
+        where TRoleClaim : IdentityRoleClaim<TKey>, new()
     {
         protected IQueryable<ArangoIdentityRole> roleCollection;
 
@@ -99,9 +99,7 @@ namespace AspNetCore.Identity.ArangoDbCore
 
         private async Task initRoleCollection()
         {
-            var cts = await Context.Client.Cursor.PostCursorAsync<ArangoIdentityRole>(
-                $"for r in {Constants.ROLE_COLLECTION} return r");
-
+            var cts = await Context.Client.Cursor.PostCursorAsync<ArangoIdentityRole>($"for r in {Constants.ROLE_COLLECTION} return r");
             roleCollection = cts.Result.AsQueryable();
         }
 
@@ -177,7 +175,7 @@ namespace AspNetCore.Identity.ArangoDbCore
             }
 
             var r = role as ArangoIdentityRole;
-            if (r == null) return IdentityResult.Failed(new IdentityError {Description = "could not convert role to ArangoIdentityRole"});
+            if (r == null) return IdentityResult.Failed(new IdentityError { Description = "could not convert role to ArangoIdentityRole" });
 
             var ret = await Context.Client.Document.PutDocumentAsync(r._id, r);
             r._rev = ret._rev;
@@ -390,12 +388,12 @@ namespace AspNetCore.Identity.ArangoDbCore
 
 
 #pragma warning disable CS1998
-                              /// <summary>
-                              /// Get the claims associated with the specified <paramref name="role"/> as an asynchronous operation.
-                              /// </summary>
-                              /// <param name="role">The role whose claims should be retrieved.</param>
-                              /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
-                              /// <returns>A <see cref="Task{TResult}"/> that contains the claims granted to a role.</returns>
+        /// <summary>
+        /// Get the claims associated with the specified <paramref name="role"/> as an asynchronous operation.
+        /// </summary>
+        /// <param name="role">The role whose claims should be retrieved.</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>A <see cref="Task{TResult}"/> that contains the claims granted to a role.</returns>
         public virtual async Task<IList<Claim>> GetClaimsAsync(TRole role, CancellationToken cancellationToken = default(CancellationToken))
 #pragma warning restore CS1998
         {
@@ -465,7 +463,7 @@ namespace AspNetCore.Identity.ArangoDbCore
                 var ret = await Context.Client.Cursor.PostCursorAsync<string>(q);
 
                 var r = $"for c in {Constants.CLAIMS_COLLECTION} filter c.Issuer == '{claim.Issuer}' "
-                        +  $"filter c.OriginalIssuer == '{claim.OriginalIssuer}' " +
+                        + $"filter c.OriginalIssuer == '{claim.OriginalIssuer}' " +
                         $"filter c.Value == '{claim.Value}' filter c.Type == '{claim.Type}' remove " +
                         "{_key: c._key} in " + Constants.CLAIMS_COLLECTION;
                 ret = await Context.Client.Cursor.PostCursorAsync<string>(r);

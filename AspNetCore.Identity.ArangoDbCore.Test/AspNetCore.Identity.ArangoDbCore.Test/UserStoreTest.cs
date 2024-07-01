@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using AspNetCore.Identity.ArangoDbCore.Infrastructure;
 using AspNetCore.Identity.ArangoDbCore.Interfaces;
 using AspNetCore.Identity.ArangoDbCore.Models;
+using AspNetCore.Identity.ArangoDbCore.Stores;
 using AspNetCore.Identity.ArangoDbCore.Test.AspNetCore.Identity.ArangoDbCore.Test.Utilities;
 using AspNetCore.Identity.ArangoDbCore.Test.Infrastructure;
 using AspNetCore.Identity.ArangoDbCore.Test.Specification;

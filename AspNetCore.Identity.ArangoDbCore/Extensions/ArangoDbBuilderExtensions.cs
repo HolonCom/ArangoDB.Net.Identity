@@ -3,6 +3,7 @@ using System.Reflection;
 using AspNetCore.Identity.ArangoDbCore.Infrastructure;
 using AspNetCore.Identity.ArangoDbCore.Interfaces;
 using AspNetCore.Identity.ArangoDbCore.Models;
+using AspNetCore.Identity.ArangoDbCore.Stores;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;

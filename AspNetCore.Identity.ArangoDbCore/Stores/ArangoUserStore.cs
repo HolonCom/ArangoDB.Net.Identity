@@ -1,20 +1,18 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
-using AspNetCore.Identity.ArangoDbCore.Extensions;
 using ArangoDBNetStandard;
+using AspNetCore.Identity.ArangoDbCore.Extensions;
 using AspNetCore.Identity.ArangoDbCore.Infrastructure;
 using AspNetCore.Identity.ArangoDbCore.Interfaces;
 using AspNetCore.Identity.ArangoDbCore.Models;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.Logging;
 
-namespace AspNetCore.Identity.ArangoDbCore
+namespace AspNetCore.Identity.ArangoDbCore.Stores
 {
     /// <summary>
     /// Represents a new instance of a persistence store for users, using the default implementation
@@ -426,7 +424,7 @@ namespace AspNetCore.Identity.ArangoDbCore
 
             var query =
                 $"for r in Roles for ur in UserRoles filter ur._from == '{user._id}' filter ur._to == r._id return r.Name";
-            var ret = await db.Cursor.PostCursorAsync < List<string>>(query);
+            var ret = await db.Cursor.PostCursorAsync<List<string>>(query);
             return ret.Result.First();
         }
 

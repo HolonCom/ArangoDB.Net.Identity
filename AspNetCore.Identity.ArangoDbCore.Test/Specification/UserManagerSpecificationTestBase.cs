@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using AspNetCore.Identity.ArangoDbCore.Infrastructure;
 using AspNetCore.Identity.ArangoDbCore.Interfaces;
 using AspNetCore.Identity.ArangoDbCore.Models;
+using AspNetCore.Identity.ArangoDbCore.Stores;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.DependencyInjection;

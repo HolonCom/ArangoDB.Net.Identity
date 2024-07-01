@@ -1,5 +1,3 @@
-using System.Security.Claims;
-
 namespace AspNetCore.Identity.ArangoDbCore.Models
 {
     /// <summary>
